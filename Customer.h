@@ -26,7 +26,23 @@ public:
         std::cout << "[Customer] Destructor called for: " << fullName << std::endl;
     }
 
+    Customer& operator++() {
+        this->loyaltyPoints += 10;
+        return *this;
+    }
+
+    Customer operator++(int) {
+        Customer temp = *this;
+        this->loyaltyPoints += 10;
+        return temp;
+    }
+
     void displayInfo() const {
         std::cout << "Customer: " << fullName << " | Phone: " << phoneNumber << " | Points: " << loyaltyPoints << std::endl;
+    }
+
+    friend std::ostream& operator<<(std::ostream& os, const Customer& c) {
+        os << "Customer: " << c.fullName << " | Phone: " << c.phoneNumber << " | Points: " << c.loyaltyPoints;
+        return os;
     }
 };

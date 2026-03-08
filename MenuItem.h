@@ -30,4 +30,14 @@ public:
     void display() const {
         std::cout << "Dish: " << name << " | Price: " << price << " | Category: " << category << "\n";
     }
+
+    friend std::ostream& operator<<(std::ostream& os, const MenuItem& item) {
+        os << "Dish: " << item.name << " | Price: " << item.price << " | Category: " << item.category;
+        return os;
+    }
+
+    friend std::istream& operator>>(std::istream& is, MenuItem& item) {
+        is >> item.name >> item.price >> item.category;
+        return is;
+    }
 };
