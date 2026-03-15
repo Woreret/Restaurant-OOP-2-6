@@ -1,9 +1,10 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <utility>
 
 class Customer {
-private:
+protected:
     std::string fullName;
     std::string phoneNumber;
     int loyaltyPoints;
@@ -11,20 +12,25 @@ private:
 public:
     Customer(std::string name, std::string phone, int points)
         : fullName(name), phoneNumber(phone), loyaltyPoints(points) {
-        std::cout << "[Customer] Main constructor called for: " << fullName << std::endl;
+        std::cout << "Customer created: " << fullName << "\n";
     }
 
     Customer(std::string name) : Customer(name, "Unknown", 10) {
-        std::cout << "[Customer] Delegated constructor called for: " << fullName << std::endl;
+        std::cout << "Customer delegated: " << fullName << "\n";
     }
 
     Customer() : Customer("Guest", "None", 0) {
-        std::cout << "[Customer] Default constructor called for: " << fullName << std::endl;
+        std::cout << "Customer default created\n";
     }
 
     ~Customer() {
-        std::cout << "[Customer] Destructor called for: " << fullName << std::endl;
+        std::cout << "Customer destroyed: " << fullName << "\n";
     }
+
+    Customer(const Customer& other) = default;
+    Customer(Customer&& other) = default;
+    Customer& operator=(const Customer& other) = default;
+    Customer& operator=(Customer&& other) = default;
 
     Customer& operator++() {
         this->loyaltyPoints += 10;

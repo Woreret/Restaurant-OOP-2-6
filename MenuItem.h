@@ -3,7 +3,7 @@
 #include <string>
 
 class MenuItem {
-private:
+protected:
     std::string name;
     double price;
     std::string category;
@@ -11,20 +11,20 @@ private:
 public:
     MenuItem(std::string n, double p, std::string c) 
         : name(n), price(p), category(c) {
-        std::cout << "[MenuItem] Main constructor called\n";
+        std::cout << "MenuItem created: " << name << "\n";
     }
 
     MenuItem(std::string n, double p) 
         : MenuItem(n, p, "No category") { 
-        std::cout << "[MenuItem] Delegated constructor called\n";
+        std::cout << "MenuItem delegated\n";
     }
 
     MenuItem() : MenuItem("Unknown dish", 0.0, "General") {
-        std::cout << "[MenuItem] Default constructor called\n";
+        std::cout << "MenuItem default created\n";
     }
 
     ~MenuItem() {
-        std::cout << "[MenuItem] Destructor called for " << name << "\n";
+        std::cout << "MenuItem destroyed: " << name << "\n";
     }
 
     void display() const {
@@ -41,3 +41,4 @@ public:
         return is;
     }
 };
+
