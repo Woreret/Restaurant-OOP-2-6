@@ -3,19 +3,19 @@
 #include <string>
 
 class MenuItem {
-protected:
+private:
     std::string name;
     double price;
     std::string category;
 
 public:
     MenuItem(std::string n, double p, std::string c) 
-        : name(n), price(p), category(c) {
+        : name(std::move(n)), price(p), category(std::move(c)) {
         std::cout << "MenuItem created: " << name << "\n";
     }
 
     MenuItem(std::string n, double p) 
-        : MenuItem(n, p, "No category") { 
+        : MenuItem(std::move(n), p, "No category") { 
         std::cout << "MenuItem delegated\n";
     }
 
@@ -37,7 +37,13 @@ public:
     }
 
     friend std::istream& operator>>(std::istream& is, MenuItem& item) {
-        is >> item.name >> item.price >> item.category;
+        std::getline(is >> std::ws, item.name);
+        if (!(is >> item.price)) {
+            is.clear();
+            while (is.get() != '\n' && is.good()) {} 
+            item.price = 0.0;
+        }
+        std::getline(is >> std::ws, item.category);
         return is;
     }
 };

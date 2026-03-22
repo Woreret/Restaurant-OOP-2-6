@@ -4,18 +4,18 @@
 #include <utility>
 
 class Customer {
-protected:
+private:
     std::string fullName;
     std::string phoneNumber;
     int loyaltyPoints;
 
 public:
     Customer(std::string name, std::string phone, int points)
-        : fullName(name), phoneNumber(phone), loyaltyPoints(points) {
+        : fullName(std::move(name)), phoneNumber(std::move(phone)), loyaltyPoints(points) {
         std::cout << "Customer created: " << fullName << "\n";
     }
 
-    Customer(std::string name) : Customer(name, "Unknown", 10) {
+    Customer(std::string name) : Customer(std::move(name), "Unknown", 10) {
         std::cout << "Customer delegated: " << fullName << "\n";
     }
 
@@ -32,15 +32,8 @@ public:
     Customer& operator=(const Customer& other) = default;
     Customer& operator=(Customer&& other) = default;
 
-    Customer& operator++() {
-        this->loyaltyPoints += 10;
-        return *this;
-    }
-
-    Customer operator++(int) {
-        Customer temp = *this;
-        this->loyaltyPoints += 10;
-        return temp;
+    void addLoyaltyPoints(int points) {
+        this->loyaltyPoints += points;
     }
 
     void displayInfo() const {
