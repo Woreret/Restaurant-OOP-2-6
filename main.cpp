@@ -5,7 +5,8 @@
 #include "MenuItem.h"
 #include "Customer.h"
 #include "Order.h"
-#include "DiscountedOrder.h"
+#include "Discount.h"
+#include "DeliveryOrder.h"
 
 int Order::totalOrdersCreated = 0;
 
@@ -15,9 +16,10 @@ int main() {
     Customer c1("Alexander", "+380991234567", 100);
     
     Order standardOrder(101, "Ready", 500.0, c1);
-
     
-    DiscountedOrder promoOrder(102, "En route", 600.0, c1, 15.0);
+    Order promoOrder(102, "En route", 600.0, c1);
+    Discount holidayDiscount(15.0);
+    promoOrder.setDiscount(holidayDiscount);
 
 
     std::cout << "\n--- Output Demonstration ---\n";
@@ -26,13 +28,20 @@ int main() {
     promoOrder.printOrder();
 
 
+    std::cout << "\n--- Delivery Order ---\n";
+    Discount deliveryDiscount(10.0);
+    DeliveryOrder delOrder(103, "Dispatched", 800.0, c1, deliveryDiscount, "Khreshchatyk 1", "John Doe");
+    delOrder.printOrder();
+
     std::cout << "\n--- Copy & Move Constructor ---" << std::endl;
-    DiscountedOrder copiedOrder = promoOrder; 
+    Order copiedOrder = promoOrder; 
     
-    DiscountedOrder movedOrder = std::move(promoOrder);
+    Order movedOrder = std::move(promoOrder);
 
-    DiscountedOrder assignedOrder(999, "New", 0.0, c1, 0.0);
+    DeliveryOrder copiedDelOrder = delOrder; 
+    DeliveryOrder movedDelOrder = std::move(delOrder); 
 
+    Order assignedOrder(999);
     assignedOrder = copiedOrder;
 
     std::cout << "\n--- Destroying objects ---" << std::endl;
