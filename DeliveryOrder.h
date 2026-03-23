@@ -10,18 +10,24 @@ private:
 
 public:
     DeliveryOrder(int id, std::string s, double total, const Customer& cust, Discount disc, std::string address, std::string courier)
-        : Order(id, std::move(s), total, cust, disc), deliveryAddress(std::move(address)), courierName(std::move(courier)) {
-        std::cout << "DeliveryOrder created for " << deliveryAddress << "\n";
+        : Order(id, std::move(s), total, cust, disc), deliveryAddress(std::move(address)), courierName(std::move(courier)) {}
+
+    ~DeliveryOrder() override = default;
+
+    void print(std::ostream& os) const override {
+        Order::print(os);
+        os << "Delivery Address: " << deliveryAddress 
+           << " | Courier: " << (courierName.empty() ? "None" : courierName) << "\n";
     }
 
-    ~DeliveryOrder() override {
-        std::cout << "DeliveryOrder destroyed\n";
+    void printReceiptType() const {
+        std::cout << "Delivery Receipt\n";
     }
 
-    void printOrder() const override {
-        Order::printOrder();
-        std::cout << "Delivery Address: " << deliveryAddress 
-                  << " | Courier: " << (courierName.empty() ? "None" : courierName) << "\n";
+    virtual double calculateFinalPrice() const override {
+        double basePrice = Order::calculateFinalPrice();
+        double deliveryFee = 100.0; 
+        return basePrice + deliveryFee;
     }
 };
 
