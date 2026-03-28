@@ -2,13 +2,13 @@
 #include <iostream>
 #include <string>
 #include <utility>
+#include <sstream>
 #include "Customer.h"
-#include "Transaction.h"
 #include "Discount.h"
-#include "IPayable.h"
 
-class Order : public Transaction, public IPayable {
-private:
+class Order {
+protected:
+    std::string transactionId;
     int orderId;
     std::string status;
     double totalAmount;
@@ -20,13 +20,14 @@ private:
 
 public:
     const Customer& getCustomer() const { return orderCustomer; }
+    std::string getTransactionId() const { return transactionId; }
     int getOrderId() const { return orderId; }
     std::string getStatus() const { return status; }
     double getTotalAmount() const { return totalAmount; }
 
 public:
     Order(int id, std::string s, double total, Customer cust, Discount disc = Discount()) 
-        : Transaction("TRX-" + std::to_string(id)), orderId(id), status(std::move(s)), totalAmount(total), tipAmount(0.0), orderCustomer(std::move(cust)), orderDiscount(disc) {
+        : transactionId("TRX-" + std::to_string(id)), orderId(id), status(std::move(s)), totalAmount(total), tipAmount(0.0), orderCustomer(std::move(cust)), orderDiscount(disc) {
         totalOrdersCreated++;
     }
 
@@ -58,6 +59,35 @@ public:
         return *this;
     }
 
+    std::string serialize() const {
+        return std::to_string(orderId) + ";" + status + ";" + 
+               std::to_string(totalAmount) + ";" + std::to_string(tipAmount) + ";" + 
+               orderCustomer.serialize();
+    }
+
+    static Order deserialize(const std::string& line) {
+        std::stringstream ss(line);
+        std::string token;
+        std::vector<std::string> parts;
+        while (std::getline(ss, token, ';')) {
+            parts.push_back(token);
+        }
+        
+        if (parts.size() < 7) return Order(); 
+        
+        int id = std::stoi(parts[0]);
+        std::string st = parts[1];
+        double total = std::stod(parts[2]);
+        double tip = std::stod(parts[3]);
+        
+        std::string custLine = parts[4] + ";" + parts[5] + ";" + parts[6];
+        Customer cust = Customer::deserialize(custLine);
+        
+        Order o(id, st, total, cust);
+        o += tip;
+        return o;
+    }
+
     virtual void print(std::ostream& os) const {
         os << "TX: " << getTransactionId() << " | Order ID: " << orderId << " | Status: " << status << " | Final Total: " << calculateFinalPrice() << " UAH";
         if (tipAmount > 0) {
@@ -82,7 +112,7 @@ public:
         return 0.20;
     }
 
-    virtual void processPayment() override {
+    void processPayment() {
         std::cout << "Processing payment for Order " << orderId << ", amount: " << calculateFinalPrice() << " UAH\n";
     }
 };
