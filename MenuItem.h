@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <string>
+#include <memory>
 
 class MenuItem {
 private:
@@ -19,12 +20,19 @@ public:
 
     virtual ~MenuItem() = default;
 
-    virtual void prepare() = 0;
+    std::string getName() const { return name; }
+    virtual double getPrice() const { return price; }
+    std::string getCategory() const { return category; }
 
-    void display() const {
-        std::cout << "Dish: " << name << " | Price: " << price << " | Category: " << category << "\n";
+    virtual void prepare() {
+        std::cout << "Preparing " << name << "...\n";
     }
 
-
+    virtual std::string serialize() const {
+        return "MENU_ITEM;" + name + ";" + std::to_string(price) + ";" + category;
+    }
+    
+    void display() const {
+        std::cout << "Dish: " << name << " | Price: " << getPrice() << " | Category: " << category << "\n";
+    }
 };
-
