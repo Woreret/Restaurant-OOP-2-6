@@ -1,77 +1,191 @@
 #include <iostream>
 #include <string>
-#include <utility>
 #include <vector>
 #include <memory>
-
+#include <limits>
 #include "MenuItem.h"
-#include "Pizza.h"
 #include "Customer.h"
 #include "Order.h"
-#include "Discount.h"
-#include "DeliveryOrder.h"
-#include "StaffSalary.h"
+#include "DiscountedItem.h"
+#include "RestaurantManager.h"
 
 int Order::totalOrdersCreated = 0;
 
-std::ostream& operator<<(std::ostream& os, const Order& o) {
-    o.print(os);
-    return os;
+void clearCin() {
+    std::cin.clear();
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 }
 
-void processOrder(const Order& order) {
-    std::cout << "--- Processing Order ---\n";
-    std::cout << order << "\n";
-    std::cout << "--------------------------------------\n";
+int getIntInput(const std::string& prompt) {
+    int value;
+    while (true) {
+        std::cout << prompt;
+        if (std::cin >> value) {
+            clearCin();
+            return value;
+        } else {
+            std::cout << "Invalid input. Please enter a number.\n";
+            clearCin();
+        }
+    }
+}
+
+double getDoubleInput(const std::string& prompt) {
+    double value;
+    while (true) {
+        std::cout << prompt;
+        if (std::cin >> value) {
+            clearCin();
+            return value;
+        } else {
+            std::cout << "Invalid input. Please enter a number.\n";
+            clearCin();
+        }
+    }
+}
+
+std::string getStringInput(const std::string& prompt) {
+    std::string value;
+    std::cout << prompt;
+    std::getline(std::cin, value);
+    return value;
+}
+
+void adminMenu(RestaurantManager& manager) {
+    std::string password = getStringInput("Enter admin password: ");
+    if (!manager.authenticateAdmin(password)) {
+        std::cout << "Incorrect password.\n";
+        return;
+    }
+
+    while (true) {
+        std::cout << "\n--- ADMIN MENU ---\n";
+        std::cout << "1. Add Dish\n";
+        std::cout << "2. View Order History\n";
+        std::cout << "3. Exit to Main Menu\n";
+        
+        int choice = getIntInput("Select an option: ");
+        if (choice == 1) {
+            std::string name = getStringInput("Enter dish name: ");
+            double price = getDoubleInput("Enter price: ");
+            std::string cat = getStringInput("Enter category: ");
+            manager.addDish(name, price, cat);
+            try {
+                manager.saveMenuToFile("menu.txt");
+                std::cout << "Dish added and saved.\n";
+            } catch (const std::exception& e) {
+                std::cout << "Error: " << e.what() << "\n";
+            }
+        } else if (choice == 2) {
+            const auto& history = manager.getOrderHistory();
+            if (history.empty()) {
+                std::cout << "No orders in history.\n";
+            } else {
+                for (const auto& o : history) {
+                    o.print(std::cout);
+                    std::cout << "\n";
+                }
+            }
+        } else if (choice == 3) {
+            break;
+        } else {
+            std::cout << "Invalid option.\n";
+        }
+    }
+}
+
+void userMenu(RestaurantManager& manager) {
+    while (true) {
+        std::cout << "\n--- USER MENU ---\n";
+        std::cout << "1. View Menu\n";
+        std::cout << "2. Make Order\n";
+        std::cout << "3. Exit to Main Menu\n";
+
+        int choice = getIntInput("Select an option: ");
+        if (choice == 1) {
+            const auto& menu = manager.getMenu();
+            if (menu.empty()) {
+                std::cout << "Menu is currently empty.\n";
+            } else {
+                for (size_t i = 0; i < menu.size(); ++i) {
+                    std::cout << "[" << i + 1 << "] ";
+                    menu[i]->display();
+                }
+            }
+        } else if (choice == 2) {
+            const auto& menu = manager.getMenu();
+            if (menu.empty()) {
+                std::cout << "Cannot make an order, menu is empty.\n";
+                continue;
+            }
+
+            std::string name = getStringInput("Enter your name: ");
+            std::string phone = getStringInput("Enter your phone: ");
+            Customer c(name, phone, 10);
+
+            double total = 0.0;
+            while (true) {
+                std::cout << "Select dish by number (0 to finish): ";
+                int dishIndex = getIntInput("");
+                if (dishIndex == 0) break;
+                if (dishIndex > 0 && dishIndex <= static_cast<int>(menu.size())) {
+                    total += menu[dishIndex - 1]->getPrice();
+                    std::cout << "Added " << menu[dishIndex - 1]->getName() << " to order.\n";
+                } else {
+                    std::cout << "Invalid dish number.\n";
+                }
+            }
+
+            if (total > 0) {
+                static int orderIdCounter = 1000;
+                Order newOrder(orderIdCounter++, "Pending", total, c);
+                manager.addOrder(newOrder);
+                try {
+                    manager.saveHistoryToFile("history.txt");
+                    std::cout << "Order placed successfully! Total: " << total << " UAH. History saved.\n";
+                } catch (const std::exception& e) {
+                    std::cout << "Error saving history: " << e.what() << "\n";
+                }
+            } else {
+                std::cout << "Order cancelled (no items selected).\n";
+            }
+        } else if (choice == 3) {
+            break;
+        } else {
+            std::cout << "Invalid option.\n";
+        }
+    }
 }
 
 int main() {
-    std::cout << "--- Creating core objects ---\n";
+    RestaurantManager manager;
 
-    Customer c1("Alexander", "+380991234567", 100);
-    Discount holidayDiscount(15.0);
-    Discount deliveryDiscount(10.0);
-
-    std::unique_ptr<MenuItem> pizza = std::make_unique<Pizza>("Margherita", 150.0);
-    std::cout << "\n--- Abstract class Demo ---\n";
-    pizza->prepare();
-
-    std::vector<std::unique_ptr<Order>> orders;
-    orders.push_back(std::make_unique<Order>(101, "Ready", 500.0, c1));
-    
-    auto promoOrder = std::make_unique<Order>(102, "En route", 600.0, c1, holidayDiscount);
-    *promoOrder += 50.0; 
-    orders.push_back(std::move(promoOrder));
-
-    orders.push_back(std::make_unique<DeliveryOrder>(103, "Dispatched", 800.0, c1, deliveryDiscount, "Khreshchatyk 1", "John Doe"));
-
-    std::cout << "\n--- Polymorphism Demo ---\n";
-    for (const auto& o : orders) {
-        std::cout << *o << "\n"; 
-        
-        std::cout << "Receipt Type: ";
-        o->printReceiptType(); 
-        
-        std::cout << "Tax Rate: " << o->getTaxRate() << "\n\n";
+    try {
+        manager.loadMenuFromFile("menu.txt");
+        manager.loadHistoryFromFile("history.txt");
+        std::cout << "Loaded " << manager.getMenu().size() << " menu items and " << manager.getOrderHistory().size() << " order(s) from files.\n";
+    } catch (const std::exception& e) {
+        std::cout << "Warning during initialization: " << e.what() << "\n";
     }
 
-    std::cout << "\n--- Polymorphism Demo---\n";
-    processOrder(*orders[2]); 
+    while (true) {
+        std::cout << "\n=== RESTAURANT SYSTEM ===\n";
+        std::cout << "1. Login as Admin\n";
+        std::cout << "2. Enter as User\n";
+        std::cout << "3. Exit\n";
 
-    std::cout << "\n--- Interface IPayable Demo---\n";
-    std::vector<IPayable*> payables;
-    
-    payables.push_back(orders[0].get()); 
-    
-    auto salaryPayment = std::make_unique<StaffSalary>("Manager Mike", 15000.0);
-    payables.push_back(salaryPayment.get());
+        int choice = getIntInput("Select role: ");
 
-    for (IPayable* p : payables) {
-        p->processPayment();
+        if (choice == 1) {
+            adminMenu(manager);
+        } else if (choice == 2) {
+            userMenu(manager);
+        } else if (choice == 3) {
+            std::cout << "Exiting program. Goodbye!\n";
+            break;
+        } else {
+            std::cout << "Invalid option.\n";
+        }
     }
-
-    std::cout << "\n--- Destroying objects ---\n";
-    std::cout << "Automatically deleted\n";
-
     return 0;
 }

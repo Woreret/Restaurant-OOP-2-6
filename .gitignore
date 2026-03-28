@@ -4,6 +4,6 @@ cmake-build-debug/
 *.o
 *.obj
 *.out
-*.exe
 .vscode/
 .idea/
+*.txt
